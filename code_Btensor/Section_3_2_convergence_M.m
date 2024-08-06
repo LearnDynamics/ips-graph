@@ -34,19 +34,19 @@ I.n               = learning_setup.n;
 
 
 %% Test Convergence in M for both ALS and ORALS
-% L_M = 10;
-% M_seq = floor(10.^linspace(1, 4.5, L_M));
-% 
-% MM = M_seq(end)*2;       % Generate more data and sample from them
-% test_num = 100;
-
-L_M = 5;
-M_seq = floor(10.^linspace(1, 2, L_M));
+L_M = 10;
+M_seq = floor(10.^linspace(1, 4.5, L_M));
 
 MM = M_seq(end)*2;       % Generate more data and sample from them
-test_num = 5;
+test_num = 100;
 
 
+%% Debug test setting
+% L_M = 5;
+% M_seq = floor(10.^linspace(1, 2, L_M));
+% 
+% MM = M_seq(end)*2;       % Generate more data and sample from them
+% test_num = 5;
 
 %%
 

@@ -1,17 +1,18 @@
-% Convergence with respect to observation noise 
+% Convergence with respect to stochastic force
 close all;  clear all;   clc;    addpaths;   rng(10);
+
 
 %% System settings
 % Specify the settings here to fix the figures for paper
 I = [];
 I = system_settings(I); % setting of the IPS and graph and its integrator
-I.viscosity = 0;    % viscosity (noise)
+I.viscosity = 1e-4;    % viscosity (noise)
 I.N         = 6;               % number of agents
 I.d         = 2;               % dim of state vectors
 I.t0       = 0;
 I.dt       = 1e-3;     % time step size
 I.steps    = 1;        % time steps
-I.obs_std  = 1e-4;       % 1e-4;     % observation noise
+I.obs_std  = 0;       % 1e-4;     % observation noise
 I.A = set_graph(I.N, 'sparsity', 0.4, 'plotON', 0);
 I.initial = 'Unif_0_2';
 
@@ -31,33 +32,33 @@ I.phi_kernel      = learning_setup.phi_kernel;                                % 
 
 I.n               = learning_setup.n;
 
+%% Test Convergence in stochastic forece for both ALS and ORALS
 
-%% Test Convergence in observation noise for both ALS and ORALS
-L = 7;obs_nse_seq = 10.^linspace(0, -6, L);
-M = 1000;
+L = 7;viscosity_seq = 10.^linspace(0, -6, L);
+M = 500;
 MM = M*5;       % Generate more data and sample from them
 test_num = 100;
 
-L = 3;obs_nse_seq = 10.^linspace(0, -6, L);
-M = 10;
-MM = M*5;       % Generate more data and sample from them
-test_num = 5;
+% debug setting
+% L = 3;viscosity_seq = 10.^linspace(0, -6, L);
+% M = 10;
+% MM = M*5;       % Generate more data and sample from them
+% test_num = 5;
 
 
 
-regu = 'lsqminnorm';       % reg_methods: ID, RKHS, None, lsqminnorm,pinv, pinvreg
 
-
+regu = 'lsqminnorm'; % 'None'; %'lsqminnorm'; 'ID','RKHS'
 loadON = 0;     % Load previous results or not
 saveON = 1;     % Save
 
-fprintf('\nThe sequence of observation noise is');
-for i = 1:L;fprintf('\t%d', obs_nse_seq(i));end;fprintf('\n');
+fprintf('\nThe sequence of viscosity is');
+for i = 1:L;fprintf('\t%d', viscosity_seq(i));end;fprintf('\n');
 
-str_name      = sprintf('conv_in_obsnse_N%i_kernelType%i_d%i_M%i_L%i_vis%i_', I.N, kernel_type, I.d, M, I.steps, I.viscosity);
-str_name      = [str_name,'_ic',I.initial, '_regu_', regu, '_nserange_', num2str(min(obs_nse_seq)), '_', num2str(max(obs_nse_seq)), '_L', num2str(L), 'test_num', num2str(test_num)];
+str_name      = sprintf('conv_in_vis_N%i_kernelType%i_d%i_M%i_L%i_obsnr', I.N, kernel_type, I.d, M, I.steps);
+str_name      = [str_name, num2str(I.obs_std),'_ic',I.initial, '_regu_', regu, '_visrange_', num2str(min(viscosity_seq)), '_', num2str(max(viscosity_seq)), 'test_num', num2str(test_num)];
 
-est_filename = [I.SAVE_DIR,str_name,'regu',regu,'.mat']; % saves estimator for each regu;
+est_filename = [I.SAVE_DIR,str_name,'.mat']; % saves estimator for each regu;
 rip_filename = [I.SAVE_DIR,str_name,'_rip','.mat'];      %
 
 disp(str_name);
@@ -72,14 +73,13 @@ if ~exist(est_filename,'file') || ~loadON
     all_E.ORSVD_seq = cell(L, test_num);
     all_E.ALS_seq   = cell(L, test_num);
     
-    time_ORALS = zeros(L, test_num);
-    time_ALS   = zeros(L, test_num);
-
+    
     % compute the estimators
     for i = 1:L
-        fprintf('\nObservation Noise sequence:  %i out of %i : \n', i, L);
+        fprintf('\nViscosity sequence:  %i out of %i : \n', i, L);
         % generate data
-        I.obs_std = obs_nse_seq(i);
+        I.viscosity = viscosity_seq(i);
+
         fprintf('Generating trajectories, M = %i, and update I ...', MM);tic
         pathObj   = get_paths(I, MM, 'ParforProgressON', 1,'saveON', 0,'loadON', 0);   % saveON = 1 is not recommended, since data can be efficiently generated
         all_xpath = pathObj.paths; 
@@ -91,14 +91,13 @@ if ~exist(est_filename,'file') || ~loadON
             learning_setup.Z_true_orig    = learning_setup.Z_true;        % just in case a change of basis is applied when dict_mat is singular
             learning_setup.Z_true         = get_Z_from_E_c( dyn_sys.A, learning_setup.c );
         end
-
         learning_setup.kernel_norm    = sqrt( learning_setup.c'*learning_setup.dict_mat*learning_setup.c );
 
         
         for b = 1:test_num
             path_id   = randperm(MM, M);
             test_path = all_xpath(path_id);         % sample from a large collection of path
-
+            
             % ORALS
             estORALS = learn_kernel_graph_ORALS_B(test_path, I, 'ALS', learning_setup,...
                 'plotON', 0, 'reg_method',regu);         % reg_methods: ID, RKHS, None, lsqminnorm,pinv, pinvreg
@@ -121,6 +120,8 @@ if ~exist(est_filename,'file') || ~loadON
             all_E.ORSVD_seq{i, b} = E_ORSVD;
         end
     end
+
+
     % Compute error
     for i = 1:L
         for b = 1:test_num
@@ -142,28 +143,30 @@ if ~exist(est_filename,'file') || ~loadON
         end
     end
 
-    save(est_filename,'all_E','all_c', 'I','error',"obs_nse_seq",'learning_setup');
+    save(est_filename,'all_E','all_c', 'I','error',"viscosity_seq",'learning_setup');
 else
-    load(est_filename,'all_E','all_c', 'I','error',"obs_nse_seq",'learning_setup');
+    load(est_filename,'all_E','all_c', 'I','error',"viscosity_seq",'learning_setup');
 end
 %% plot
-% figure;
-% subplot(141);loglog(obs_nse_seq, error.k_als);  grid on;xlabel('observation noise');ylabel('kernel error');title('ALS');
-% set(gca, 'xdir', 'reverse', 'Xtick', 10.^(-6:1:0), 'Xticklabel', {'$10^{-6}$', '', '$10^{-4}$', '', '$10^{-2}$', '', '$10^{0}$'}, 'TickLabelInterpreter', 'latex');
-% 
-% subplot(142);loglog(obs_nse_seq, error.k_orals);grid on;xlabel('observation noise');ylabel('kernel error');title('ORALS');
-% set(gca, 'xdir', 'reverse', 'Xtick', 10.^(-6:1:0), 'Xticklabel', {'$10^{-6}$', '', '$10^{-4}$', '', '$10^{-2}$', '', '$10^{0}$'}, 'TickLabelInterpreter', 'latex');
-% 
-% subplot(143);loglog(obs_nse_seq, error.g_als);  grid on;xlabel('observation noise');ylabel('graph error');title('ALS');
-% set(gca, 'xdir', 'reverse', 'Xtick', 10.^(-6:1:0), 'Xticklabel', {'$10^{-6}$', '', '$10^{-4}$', '', '$10^{-2}$', '', '$10^{0}$'}, 'TickLabelInterpreter', 'latex');
-% 
-% subplot(144);loglog(obs_nse_seq, error.g_orals);grid on;xlabel('observation noise');ylabel('graph error');title('ORALS');
-% set(gca, 'xdir', 'reverse', 'Xtick', 10.^(-6:1:0), 'Xticklabel', {'$10^{-6}$', '', '$10^{-4}$', '', '$10^{-2}$', '', '$10^{0}$'}, 'TickLabelInterpreter', 'latex');
-% 
-% 
-% set(gcf,'Position',[100 100 1000 300])
-% set(findall(gcf,'-property','FontSize'),'FontSize', 13)
-% tightfig
+figure;
+subplot(141);loglog(sqrt(viscosity_seq), error.k_als);  grid on;xlabel('stochastic force');ylabel('kernel error');title('ALS');
+set(gca, 'xdir', 'reverse', 'Xtick', 10.^(-3:0.5:0.5), 'Xticklabel', {'$10^{-3}$', '', '$10^{-2}$', '', '$10^{-1}$', '', '$10^{0}$'}, 'TickLabelInterpreter', 'latex');
+
+subplot(142);loglog(sqrt(viscosity_seq), error.k_orals);grid on;xlabel('stochastic force');ylabel('kernel error');title('ORALS');
+set(gca, 'xdir', 'reverse', 'Xtick', 10.^(-3:0.5:0.5), 'Xticklabel', {'$10^{-3}$', '', '$10^{-2}$', '', '$10^{-1}$', '', '$10^{0}$'}, 'TickLabelInterpreter', 'latex');
+
+subplot(143);loglog(sqrt(viscosity_seq), error.g_als);  grid on;xlabel('stochastic force');ylabel('graph error');title('ALS');
+set(gca, 'xdir', 'reverse', 'Xtick', 10.^(-3:0.5:0.5), 'Xticklabel', {'$10^{-3}$', '', '$10^{-2}$', '', '$10^{-1}$', '', '$10^{0}$'}, 'TickLabelInterpreter', 'latex');
+
+subplot(144);loglog(sqrt(viscosity_seq), error.g_orals);grid on;xlabel('stochastic force');ylabel('graph error');title('ORALS');
+set(gca, 'xdir', 'reverse', 'Xtick', 10.^(-3:0.5:0.5), 'Xticklabel', {'$10^{-3}$', '', '$10^{-2}$', '', '$10^{-1}$', '', '$10^{0}$'}, 'TickLabelInterpreter', 'latex');
+
+
+set(gcf,'Position',[100 100 1000 300])
+% sgtitle(['Convergence with M, regu = ', regu])
+% sgtitle('Convergence with M')
+set(findall(gcf,'-property','FontSize'),'FontSize', 13)
+tightfig
 
 %% Boxplot
 
@@ -176,45 +179,48 @@ g_y_max = max([error.g_orals; error.g_als], [], 'all');
 
 
 figure; 
+% subplot(141);
 tiledlayout(1, 4, 'TileSpacing', 'normal', 'padding', 'compact');
 nexttile;
-% subplot(141);
-boxplot(error.g_als',  obs_nse_seq);  xlabel('Observation Noise');ylabel('Graph error');title('ALS');  grid on;
-hold on;plot(L:-1:1, mean(error.g_als, 2))
+boxplot(error.g_als',  sqrt(viscosity_seq));  xlabel('Stochastic Force');ylabel('Graph error');title('ALS');  grid on;
+hold on;plot(L:-1:1, trimmean(error.g_als, 95, 2))
 ylim([g_y_min, g_y_max]); 
 ax = gca;ax.YAxis.Scale = "log"; 
-set(gca, 'xdir', 'reverse', 'xtick',1:L, 'Xticklabel', {'$10^{-6}$', '', '$10^{-4}$', '', '$10^{-2}$', '', '$10^{0}$'}, 'TickLabelInterpreter', 'latex');
+set(gca, 'xdir', 'reverse', 'xtick',1:L, 'Xticklabel', {'$10^{-3}$', '', '$10^{-2}$', '', '$10^{-1}$', '', '$10^{0}$'}, 'TickLabelInterpreter', 'latex');
+
 
 
 % subplot(142);
 nexttile;
-boxplot(error.g_orals', obs_nse_seq); xlabel('Observation Noise');ylabel('Graph error');title('ORALS');grid on
-hold on;plot(L:-1:1, mean(error.g_orals, 2))
+boxplot(error.g_orals', sqrt(viscosity_seq)); xlabel('Stochastic Force');ylabel('Graph error');title('ORALS');grid on
+hold on;plot(L:-1:1, trimmean(error.g_orals, 95, 2))
 ylim([g_y_min, g_y_max]); ax = gca;ax.YAxis.Scale = "log";
-set(gca, 'xdir', 'reverse', 'xtick',1:L, 'Xticklabel', {'$10^{-6}$', '', '$10^{-4}$', '', '$10^{-2}$', '', '$10^{0}$'}, 'TickLabelInterpreter', 'latex');
+set(gca, 'xdir', 'reverse', 'xtick',1:L, 'Xticklabel', {'$10^{-3}$', '', '$10^{-2}$', '', '$10^{-1}$', '', '$10^{0}$'}, 'TickLabelInterpreter', 'latex');
 
 
 % subplot(143);
 nexttile;
-boxplot(error.k_als',  obs_nse_seq);  xlabel('Observation Noise');ylabel('Kernel error');title('ALS');  grid on
-hold on;plot(L:-1:1, mean(error.k_als, 2))
+boxplot(error.k_als',  sqrt(viscosity_seq));  xlabel('Stochastic Force');ylabel('Kernel error');title('ALS');  grid on
+hold on;plot(L:-1:1, trimmean(error.k_als, 95, 2))
 ylim([k_y_min, k_y_max]); ax = gca;ax.YAxis.Scale = "log";  
-set(gca, 'xdir', 'reverse', 'xtick',1:L, 'Xticklabel', {'$10^{-6}$', '', '$10^{-4}$', '', '$10^{-2}$', '', '$10^{0}$'}, 'TickLabelInterpreter', 'latex');
+set(gca, 'xdir', 'reverse', 'xtick',1:L, 'Xticklabel', {'$10^{-3}$', '', '$10^{-2}$', '', '$10^{-1}$', '', '$10^{0}$'}, 'TickLabelInterpreter', 'latex');
 
 
 % subplot(144);
 nexttile;
-boxplot(error.k_orals', obs_nse_seq); xlabel('Observation Noise');ylabel('Kernel error');title('ORALS');grid on
-hold on;plot(L:-1:1, mean(error.k_orals, 2))
+boxplot(error.k_orals', sqrt(viscosity_seq)); xlabel('Stochastic Force');ylabel('Kernel error');title('ORALS');grid on
+hold on;plot(L:-1:1, trimmean(error.k_orals, 95, 2))
 ylim([k_y_min, k_y_max]); ax = gca;ax.YAxis.Scale = "log";
-set(gca, 'xdir', 'reverse', 'xtick',1:L, 'Xticklabel', {'$10^{-6}$', '', '$10^{-4}$', '', '$10^{-2}$', '', '$10^{0}$'}, 'TickLabelInterpreter', 'latex');
+set(gca, 'xdir', 'reverse', 'xtick',1:L, 'Xticklabel', {'$10^{-3}$', '', '$10^{-2}$', '', '$10^{-1}$', '', '$10^{0}$'}, 'TickLabelInterpreter', 'latex');
 
-%set(gcf,'Position',[100 100 1200 350])
  set(gcf,'Position',[100 100 800 250])
-set(findall(gcf,'-property','FontSize'),'FontSize', 13)
+ set(findall(gcf,'-property','FontSize'),'FontSize', 13)
 % tightfig
- set_positionFontsAll;
+
 
 %% save figure to paper figure folder
-figname = [PAPER_FIG_DIR, '/convergence_obs_std.pdf'];
+figname = [PAPER_FIG_DIR, '/convergence_vis.pdf'];
+ set_positionFontsAll;
 saveas(gcf, figname);
+
+ 
