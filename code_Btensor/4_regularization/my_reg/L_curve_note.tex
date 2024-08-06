@@ -1,0 +1,253 @@
+\documentclass{article} % ,9pt
+%\documentclass[a4paper]{amsart}
+\usepackage{fullpage}
+\usepackage{amsmath,bm}
+\usepackage{amssymb}%This gives us symbols like \square
+\usepackage{verbatim}%This gives us the \begin{comment} environment.
+\usepackage{amsthm}%This gives us Definition style of theorem.
+\usepackage{mathrsfs}%This gives us \mathscr#
+\usepackage{graphicx}
+\usepackage{mathtools}
+\usepackage[colorlinks,pdfdisplaydoctitle,linkcolor=blue,citecolor=blue]{hyperref}
+\usepackage{caption}
+%\usepackage[top=3cm, bottom=4cm, right=3cm, left=3cm]{geometry}
+\usepackage[top=3cm, bottom=3cm, right=3cm, left=3cm]{geometry}
+\usepackage{subcaption}
+\usepackage{url}
+\usepackage{epstopdf}
+\usepackage{pgf,tikz}
+\usepackage{bbm}
+\usepackage[notref,notcite,color]{showkeys}
+\usepackage{extarrows}
+\usetikzlibrary{arrows}
+%\usepackage{algorithm}
+%\usepackage{algorithmicx}
+\usepackage[ruled,lined]{algorithm2e}
+ 
+% \usepackage[]{algorithm2e}
+%\usepackage{natbib}              %! needed for Harvard style of references.
+  %  \bibpunct{[}{]}{,}{n}{,}{;}
+% \usepackage[sort&compress]{natbib}              %! needed for Harvard style of references.
+%     \bibpunct{[}{]}{,}{n}{,}{;}
+%\usepackage{parskip} \setlength{\parindent}{15pt}
+\usepackage{ dsfont }
+\usepackage{listings}
+\usepackage{bbm}
+\usepackage{color}
+\usepackage{ dsfont }
+\usepackage{enumerate}
+\usepackage{todonotes}
+\DeclareMathOperator*{\argmin}{arg\,min}
+
+
+\newcommand{\FL}[1]{\textcolor{blue}{{#1}}}
+\newcommand{\XW}[1]{\textcolor{red}{{#1}}}
+
+
+%algorithm
+
+%\usepackage{algorithm}
+% \usepackage{algorithmicx}
+
+\renewcommand{\Delta}{\triangle}
+
+
+\definecolor{darkblue}{rgb}{0,0,0.7}
+\def\hwcomment#1{\marginpar{\raggedright\scriptsize{\textcolor{darkblue}{#1}}}}
+\def\ascomment#1{\marginpar{\raggedright\scriptsize{\textcolor{darkgreen}{#1}}}}
+\def\ylcomment#1{\marginpar{\raggedright\scriptsize{\textcolor{red}{#1}}}}
+
+
+
+\definecolor{darkgreen}{rgb}{0.01,0.75,0.24}
+
+
+
+%Macros
+\newcommand{\Cov}[1]{\mathrm{Cov}\left[#1\right]}
+
+
+% This gives full page usage.
+
+%----- long measures -----
+
+%Theorem Environments
+\theoremstyle{plain}
+\newtheorem{thm}{Theorem}[section]
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{definition}[thm]{Definition}
+\newtheorem{conj}[thm]{Conjecture}
+\newtheorem{Lem}[thm]{Lemma}
+\newtheorem{lem}[thm]{Lemma}
+\newtheorem{lemma}[thm]{Lemma}
+\newtheorem{cor}[thm]{Corollary}
+\newtheorem{prop}[thm]{Proposition}
+\newtheorem{assumption}{Assumption}
+\newtheorem{proposition}[thm]{Proposition}
+
+\newtheorem{ex}[thm]{Example}
+
+
+\newtheorem{remark}[thm]{Remark}
+\newtheorem{rem}[thm]{Remark}
+\newtheorem{example}[thm]{Example}
+
+\numberwithin{equation}{section}
+\renewcommand{\theequation}{\thesection .\arabic{equation}}
+
+
+\def\calE{\mathcal{E}} 
+\def\calR{\mathcal{R}}
+\def\calN{\mathcal{N}}
+\def\Abar{\overline{A}}
+\def\bbar{\overline{b}}
+
+
+\newcommand{\rbracket}[1]{\left(#1\right)}
+\newcommand{\sbracket}[1]{\left[#1\right]}
+\newcommand{\norm}[1]{\left\|#1\right\|}
+\newcommand{\abs}[1]{\left|#1\right|}
+\newcommand{\normv}[1]{\left| #1\right|}
+\newcommand{\innerp}[1]{\langle{#1}\rangle}
+\newcommand{\dbinnerp}[1]{\langle\hspace{-1mm}\langle{#1}\rangle \hspace{-1mm}\rangle}
+\newcommand{\vect}[1] {\pmb{#1}}
+\newcommand{\mat}[1]{\pmb{#1}}
+\newcommand{\floor}[1]{\lfloor{#1}\rfloor}
+
+\title{On L-curve computation}
+\author{Quanjun Lang, Fei Lu}
+\date{October-December 2022}
+
+\begin{document}
+
+\maketitle
+\begin{abstract}
+L-curve method by Hansen computes the optimal hyper-parameter for regularization.  Here we review the method and its use in the data-adaptive RKHS Tikhonov regularization (DARTR). 
+\end{abstract}
+
+
+
+
+Hansen's L-curve method \cite{hansen_LcurveIts_a} selects the optimal hyper-parameter for Tikhonov regularization. The optimal parameter maximizes the curvature of the curve the norm of the regularized solution versus the residual norm. The advantages of the L-curve criterion are robustness and ability to treat perturbations consisting of correlated noise. The disadvantages are over-smoothing (the smoother the solution, the worse the optimal $\lambda$ by the L-curve) and inconsistency when dimension increases. 
+The analysis of L-curve regularization is complicated because it depends on the linear system and the way 
+
+``Every practical method has its advantages and disadvantages. '' 
+% Hensen's abstract: The L-curve is a log-log plot of the norm of a regularized solution versus the norm of the corresponding residual norm. It is a convenient graphical tool for displaying the trade-off between the size of a regularized solution and its fit to the given data, as the regularization parameter varies. The L-curve thus gives insight into the regularizing properties of the underlying regularization method, and it is an aid in choosing an appropriate regularization parameter for the given data. In this chapter we summarize the main properties of the L-curve, and demonstrate by examples its usefulness and its limitations both as an analysis tool and as a method for choosing the regularization parameter.
+% Hansen's comment about limitations: Every practical method has its advantages and disadvantages. The advantages of the L-curve criterion are robustness and ability to treat perturbations consisting of correlated noise. In this section we de- scribe two disadvantages or limitations of the L-curve criterion; un- derstanding these limitations is a key to the proper use of the L-curve criterion and, hopefully, also to future improvements of the method.
+
+
+\section{L-curve for LS with l2 norm}
+Consider first the simplest l2 regularization for least squares (LS), for which we minimize the following loss,
+$$
+L_\lambda(x) = \norm{Ax - b}^2 + \lambda \norm{x}^2.
+$$
+Here the LSE is $x_{reg} = (A^\top A+\lambda I)^{-1}A^\top b$. We consider the SVD of $A$ such that $A=USV^\top$ with $U^\top U =I $ and $V^\top V= I$. Then 
+$$x_{reg} = V(S^2 + \lambda I)^{-1}V^\top\left( VSU^\top b\right)
+= V\left[(S^2 + \lambda I)^{-1}S\right]U^\top b
+$$
+For given value of $\lambda$, the loss/residual of the LSE becomes
+$$E(\lambda) = \norm{Ax_{reg} - b} = \norm{U\left[(S^2 + \lambda I)^{-1}S^2\right]U^\top b - UU^\top b} = \norm{\left[(S^2 + \lambda I)^{-1}\lambda I\right]U^\top b}$$
+and the norm of the regularized solution is 
+$$
+R(\lambda) = \norm{x_{reg}} = \norm{\left[(S^2 + \lambda I)^{-1}S\right]U^\top b}.
+$$
+The L-curve is a log-log plot of the curve 
+\[
+\text{L-curve}: l(\lambda)=(y(\lambda),x(\lambda)) := (\log R(\lambda), \log E(\lambda)). 
+\]
+
+The L-curve method maximize the curvature of the L-curve to reach a balance between minimization of the residual and control of the regularization norm. 
+$$ %\begin{align}\label{eq:opt_lambda}
+	\lambda_{0} 
+	= \rm{argmax}_{\lambda_{\text{min}} \leq \lambda \leq \lambda_{\text{max}}}\kappa(l (\lambda)) 
+	= \rm{argmax}_{\lambda_{\text{min}} \leq \lambda \leq \lambda_{\text{max}}}
+	\frac{x'y'' - x' y''}{(x'\,^2 + y'\,^2)^{3/2}},
+$$ %\end{align}
+where $\lambda_{min}$ and $\lambda_{max}$ are pre-assigned or computed from the smallest and the largest generalized eigenvalues of $A$.  
+
+Hansen's function $\textbf{lcfun}$ computes the curvature explicitly using the parameters 
+\begin{equation}\label{eq:para_lcfun}
+\{\lambda_n\}_{n = 1}^N, \ \beta = U^\top b, \ \xi = S^{-1}\beta, \ s = diag(S).
+\end{equation}
+\textbf{Notice that $U$ and $S$ are from the SVD of $A$}, and the output is the curvature of the L-curve at $\{\lambda_n\}_{n = 1}^N.$
+
+Note that we used $\lambda$ instead of using $\lambda^2$. But this will not change the position of the maximal curvature of the L-curve in the $(E, R)$ coordinate since the curvature does not depend on the parametrization.  
+
+\subsection{Quadratic form}
+In applications, we often have a loss function in a quadratic form: 
+$$
+L = c^\top \Abar c - 2 c^\top \bbar + \bbar^\top \Abar^{-1} \bbar + \lambda c^\top c.
+$$
+We need to transfer the quadratic form into Hansen's setting so that we can use the explicit computation of the curvature. Taking  
+$$A = \Abar^{1/2}, \  b = \Abar^{-1/2}\bbar,$$ 
+(or equivalently, $\Abar = A^\top A$, $\bbar= A^\top b$), we have 
+$$
+L = c^\top \Abar c - 2 c^\top \bbar + \bbar^\top \Abar^{-1} \bbar + \lambda c^\top c= \norm{A x - b}^2 + \lambda \norm{c}^2.
+$$
+To supply the inputs of the function $\textbf{lcfun}$ in $\eqref{eq:para_lcfun}$, we  need to find the SVD of $A= \Abar^{1/2}$. Since $\Abar$ is symmetric, we have the SVD of $\Abar$ as $\Abar = USU^\top $, hence $A = US^{1/2}U^\top$ and $\Abar^{-1/2} = US^{-1/2}U^\top$. Then,  the inputs of $\textbf{lcfun}$ are
+\begin{equation}\label{eq:lcfun_qf}
+\beta = U^\top  b = S^{-1/2}U^\top \bbar, \quad \xi = S^{-1}U^\top \bbar, \quad s = {\rm diag}(S^{1/2})
+\end{equation}
+and $\{\lambda_n\}_{n = 1}^N$ are taken to be the square root. 
+
+Then Hansen used optimization to find the minimal curvature around the argmin in the $\lambda$-grid. The above part is contained in the code \textbf{L\_curve\_standard\_form}.
+
+\section{General regularization norms}
+The L-curve method applies to general regularization norms in the form $\|c\|_\Sigma^2 = c^\top \Sigma^{-1}c$. The corresponding loss function is 
+$$
+Loss =  c^\top \Abar c - 2 c^\top \bbar + \bbar^\top \Abar^{-1} \bbar + \lambda (c-x)^\top \Sigma^{-1} (c-x).
+$$
+Here $\Sigma^{-1}$ is the basis matrix of the basis functions in the Hilbert space defined by the norm.  When $\Sigma^{-1}=Id$, we get the $l2$ regularization in the previous section. We use $\Sigma^{-1}$ in the regularization norm since it corresponds to the covariance matrix of a Bayesian Gaussian prior. Suppose $L = \sqrt{\Sigma}$ is the square root of $\Sigma$ computed from the SVD of $\Sigma$. Take $y = L^{-1}(c-x)$ and $c = Ly + x$, we have 
+\begin{align}
+Loss &=  c^\top \Abar c - 2 c^\top \bbar + \bbar^\top \Abar^{-1} \bbar + \lambda (c-x)^\top \Sigma^{-1} (c-x).\\
+&= (y^\top L^\top + x^\top) \Abar (L y + x) - 2 \bbar^\top (L y + x) + \bbar^\top \Abar^{-1}\bbar + \lambda y^\top y\\
+&=
+y^\top( L^\top \Abar L) y - 2y^\top (L^\top \bbar -L^\top \Abar x) + \lambda y^\top y + Const.
+\end{align}
+The problem can be reduced to the standard form using $\tilde A = L^\top \Abar L$ and $\tilde b = L^\top \bbar - L^\top \Abar x$. But the result is for $y$. Then use $c = Ly + x$ to get the estimation. 
+
+In short, the computation procedure is as follows.  Given $\Abar,\bbar,\Sigma, x$: 
+\begin{enumerate}
+\item SVD for $\Sigma$, $\Sigma = U_0 S_0 U_0^\top$ and set $L= U_0 S_0^{1/2}U_0^\top$. 
+\item SVD for $\tilde A =  L^\top \Abar L = USV$, and compute $\tilde b = L^\top (\bbar -\Abar x)$.
+\item Get $\lambda_{opt}$ by using $\textbf{lcfun}$ with inputs $\{\lambda_n\}$, $\beta= S^{-1/2}U^\top \tilde b, \quad \xi = S^{-1}U^\top \tilde b, \quad s = {\rm diag}(S^{1/2})$. 
+\item Get estimator $c = Ly_*+x$ where $y_*= (\tilde A + \lambda_{opt} I) \tilde b$. 
+\end{enumerate}
+\subsection{DARTR}
+In DARTR, 
+$\Sigma =B^{-1} \Abar B^{-1}$ with $B$ being the basis matrix in $L^2(\rho)$, $x = 0$ and $L = 
+B^{-1/2} \Abar^{1/2} B^{-1/2}$. Hence
+% $$ \tilde A = L^\top \Abar L =  B^{-1/2} \Abar^{1/2} B^{-1/2} \Abar B^{-1/2} \Abar^{1/2} B^{-1/2}, \quad \tilde b = L^\top \bbar - L^\top \Abar x.$$ 
+In particular, when $B= I$, we have $L= \Abar^{1/2}$, and $\tilde A =\Abar^2$ and $\tilde b = \Abar^{-1/2} \bbar$. 
+
+
+The computation procedure is as follows.  Given $\Abar,\bbar,B, x$: 
+\begin{enumerate}
+\item SVD for $\Sigma = B^{-1}\Abar B^{-1}$, $\Sigma = U_0 S_0 U_0^\top$ and set $L= U_0 S_0^{1/2}U_0^\top$. 
+\item SVD for $\tilde A =  L^\top \Abar L = USV$, and compute $\tilde b = L^\top (\bbar -\Abar x)$.
+\item Get $\lambda_{opt}$ by using $\textbf{lcfun}$ with inputs $\{\lambda_n\}$, $\beta= S^{-1/2}U^\top \tilde b, \quad \xi = S^{-1}U^\top \tilde b, \quad s = {\rm diag}(S^{1/2})$. 
+\item Get estimator $c = Ly_*$ where $y_*= (\tilde A + \lambda_{opt} I)^{-1} \tilde b$. 
+\end{enumerate}
+
+
+Remark1: a major issue is inversion of ill-conditioned matrix. SVD is in general better than $A\backslash b$, pinv or least squares.  Thus, we compute the inversion $B^{-1}$ by SVD to reduce numerical errors when $B$ is ill-conditioned.  A numerical stable way to implement Step 1 is: first, compute $ L_0 = {\rm chol}(B)$ and do SVD for $L_0^{-1}\Abar L_0^{-1} = U_0 S_0 U_0^\top$. Then, get $\Sigma = B^{-1}\Abar B^{-1}= L_0^{-1}U_0 S U_0^\top L_0^{-\top} $. 
+
+Remark2: Our goal is solve $(\Abar+\lambda B \Abar^{-1}B)^{-1}\bbar $ with an optimal $\lambda$. Let $D= B^{-1}\Abar^{1/2} $. Then, $B \Abar^{-1}B = D^{-\top}D^{-1}$ and $(\Abar+\lambda B \Abar^{-1}B) = D^{-\top}(D^{\top} \Abar D  +\lambda I) D^{-1}$. Here $D$ is the same as the $L$ in step 1. 
+
+
+
+\bibliographystyle{alpha}
+% \bibliography{ref_regularization}
+\begin{thebibliography}{Han00}
+
+\bibitem[Han00]{hansen_LcurveIts_a}
+Per~Christian Hansen.
+\newblock The {L}-curve and its use in the numerical treatment of inverse
+  problems.
+\newblock In {\em in Computational Inverse Problems in Electrocardiology, ed.
+  P. Johnston, Advances in Computational Bioengineering}, pages 119--142. WIT
+  Press, 2000.
+
+\end{thebibliography}
+
+\end{document}
