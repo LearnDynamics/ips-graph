@@ -29,8 +29,8 @@ estALS = learn_kernel_graph_ALS( trainingPathsObj.paths, dyn_sys, learning_setup
     'stop_thres_testpaths', dyn_sys.viscosity*10, 'stop_thres_relDelta_A', 1e-3, 'stop_thres_relDelta_c', 1e-3, 'plotON', 1, ...
     'reg_methodK', 'None', 'reg_methodA', 'lsqnonneg', ...
     'A_sparsity_thres', 0,'A_sparsity_prior',1, 'test_paths', [] );% 1e-2*norm(I.A,'fro') );
-graph_err ( estALS.A, dyn_sys ),
-kernel_err( estALS.c, learning_setup ),
+% graph_err ( estALS.A, dyn_sys ),
+% kernel_err( estALS.c, learning_setup ),
 
 
 matFactorize  = 'ALS';    % %  'SVD', 'ALS', 'SVD+ORALS'

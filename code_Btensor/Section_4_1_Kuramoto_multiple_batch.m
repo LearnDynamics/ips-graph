@@ -36,7 +36,7 @@ all_M = [8, 64, 512];
 test_num = length(all_M);
 batch_num = 20;
 
-batch_num = 3;
+% batch_num = 3;
 
 %% load settings
 % Observations and training data sizes
