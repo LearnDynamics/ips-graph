@@ -5,41 +5,36 @@ close all;  clear all;   clc;    addpaths;   rng(10);
 % Specify the settings here to fix the figures for paper
 I = [];
 I = system_settings(I); % setting of the IPS and graph and its integrator
-I.viscosity = 1e-4;    % viscosity (noise)
-I.N         = 6;               % number of agents
-I.d         = 2;               % dim of state vectors
+I.viscosity = 1e-4;     % viscosity (noise)
+I.N         = 6;        % number of agents
+I.d         = 2;        % dim of state vectors
 I.t0       = 0;
-I.dt       = 1e-3;     % time step size
-I.steps    = 1;        % time steps
-I.obs_std  = 1e-4;       % 1e-4;     % observation noise
+I.dt       = 1e-3;      % time step size
+I.steps    = 1;         % time steps
+I.obs_std  = 1e-4;      % 1e-4;     % observation noise
 I.A = set_graph(I.N, 'sparsity', 0.4, 'plotON', 0);
 I.initial = 'Unif_0_2';
-% I.basis_case = 1;
-% I = update_system_settings(I);         % this part to be changed 
 
 PAPER_FIG_DIR = I.PAPER_FIG_DIR;        % saving folder for figures in paper
+kernel_type             = 'typical_example_Lenard_Jones';  
+                        % 6: for parametric inference
+                        % 6 'typical_example_Lenard_Jones': reduandant-basis; 
+                        % 'randomSmoothFourierWithDecay': many but good basis                
+                        % see options in learning_settings.m
 
-kernel_type             = 'typical_example_Lenard_Jones';  % 6: for parametric inference
-                              % 6 'typical_example_Lenard_Jones': reduandant-basis; 
-                              % 'randomSmoothFourierWithDecay': many but good basis                % see options in learning_settings.m
-n =  16;   %  it is determined in learning_settings, where kernel_type determines n
+n = 16;   %  it is determined in learning_settings, where kernel_type determines n
 
 learning_setup            = learning_settings( kernel_type, I, struct('n',n) );
-learning_setup.Z_true     = get_Z_from_E_c( I.A, learning_setup.c );       % Z is the product of A and c                                                      % Z is the product of E and c
+learning_setup.Z_true     = get_Z_from_E_c( I.A, learning_setup.c );       % Z is the product of A and c               
 
-I.phi_kernel      = learning_setup.phi_kernel_cheb;                           % MM: logical inconsistency here and in the following because of this; learning_set.phi_kernel not used in any of what follows
-%I.phi_kernel      = learning_setup.phi_kernel;                                % FL: learning_set.phi_kernel serves as the ground truth. --- It is a parametric inference. The chev is towards non-parametric inference
-
+I.phi_kernel      = learning_setup.phi_kernel_cheb;                   
 I.n               = learning_setup.n;
-
-
 %% Test Convergence in M for both ALS and ORALS
 L_M = 10;
 M_seq = floor(10.^linspace(1, 4.5, L_M));
 
 MM = M_seq(end)*2;       % Generate more data and sample from them
 test_num = 100;
-
 
 %% Debug test setting
 % L_M = 5;
@@ -49,7 +44,6 @@ test_num = 100;
 % test_num = 5;
 
 %%
-
 regu = 'lsqminnorm';       % reg_methods: ID, RKHS, None, lsqminnorm,pinv, pinvreg
 
 loadON = 0;     % Load previous results or not
