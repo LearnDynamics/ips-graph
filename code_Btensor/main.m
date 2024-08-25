@@ -156,13 +156,3 @@ if RIPcompON
     fprintf('The RIP range for ALS is w.h.p. in \t(%i, %i)\n', RIP.min, RIP.max);
 end
 
-%% large M: convergence
-%  convergence_graph_kernel      % it can run now. 
-
-% convergence_M;
-%% ORALS convergence
-% convergence_ORALS;
-%% ALS with regu: None, ID, RKHS
-% test_M_vs_noise
-
-
